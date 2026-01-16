@@ -24,6 +24,7 @@
             overflow: hidden;
         }
 
+        /* Denne delen blir nå "usynlig" for Ctrl+F */
         header {
             padding: 8px 15px;
             background: var(--header);
@@ -31,6 +32,7 @@
             gap: 12px;
             align-items: center;
             border-bottom: 1px solid #333;
+            user-select: none; /* Hindrer markering av knappetekst */
         }
 
         button {
@@ -70,7 +72,7 @@
 </head>
 <body>
 
-<header>
+<header inert>
     <button onclick="openFile()">Åpne fil</button>
     <button onclick="saveFile()">Lagre (Ctrl+S)</button>
     <span id="file-info">Ingen fil valgt</span>
@@ -82,42 +84,44 @@
     let fileHandle;
     const editor = document.getElementById('editor');
     const fileInfo = document.getElementById('file-info');
+    const header = document.querySelector('header');
 
-    // Åpne fil
+    // Funksjon for å midlertidig fjerne 'inert' når vi faktisk skal klikke
+    // Siden 'inert' også blokkerer klikk, fjerner vi det ved mousemove
+    document.addEventListener('mousemove', (e) => {
+        if (e.clientY < 60) {
+            header.removeAttribute('inert');
+        } else {
+            header.setAttribute('inert', '');
+        }
+    });
+
     async function openFile() {
         try {
             [fileHandle] = await window.showOpenFilePicker({
                 types: [{
-                    description: 'Web Files',
+                    description: 'Web-filer',
                     accept: {'text/html': ['.html'], 'text/css': ['.css'], 'text/javascript': ['.js']}
                 }]
             });
             const file = await fileHandle.getFile();
             editor.value = await file.text();
             fileInfo.innerText = `Redigerer: ${file.name}`;
-        } catch (err) {
-            console.log('Bruker avbrøt åpning');
-        }
+        } catch (err) {}
     }
 
-    // Lagre fil (overskriver hvis filen allerede er åpnet)
     async function saveFile() {
         if (!fileHandle) {
             try {
                 fileHandle = await window.showSaveFilePicker();
-            } catch (err) {
-                return; // Bruker avbrøt
-            }
+            } catch (err) { return; }
         }
-
         const writable = await fileHandle.createWritable();
         await writable.write(editor.value);
         await writable.close();
-        
         fileInfo.innerText = `Lagret: ${new Date().toLocaleTimeString()} - ${fileHandle.name}`;
     }
 
-    // Hurtigtaster
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
@@ -125,17 +129,12 @@
         }
     });
 
-    // Tab-tasten setter nå inn 2 mellomrom
     editor.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
             e.preventDefault();
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
-
-            // Sett inn to mellomrom
             editor.value = editor.value.substring(0, start) + "  " + editor.value.substring(end);
-
-            // Flytt markøren to plasser frem
             editor.selectionStart = editor.selectionEnd = start + 2;
         }
     });
