@@ -1,164 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Night Editor 🌙</title>
+    <title>Edit</title>
     <style>
-        :root {
-            --bg: #121212;
-            --text: #d4d4d4;
-            --accent: #3794ff;
-            --header: #1e1e1e;
-        }
+      :root {
+        --bg: #121212;
+        --text: #d4d4d4;
+        --accent: #3794ff;
+        --header: #1e1e1e;
+      }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Consolas', 'Monaco', monospace;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: 'Consolas', 'Monaco', monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
 
-        header {
-            padding: 8px 15px;
-            background: var(--header);
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            user-select: none;
-        }
+      header {
+        padding: 8px 15px;
+        background: var(--header);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        border-bottom: 1px solid #333;
+        user-select: none;
+      }
 
-        button {
-            background: #2d2d2d;
-            color: #ccc;
-            border: 1px solid #444;
-            padding: 5px 12px;
-            cursor: pointer;
-            font-size: 13px;
-            border-radius: 3px;
-        }
+      button {
+        background: #2d2d2d;
+        color: #ccc;
+        border: 1px solid #444;
+        padding: 5px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        border-radius: 3px;
+      }
 
-        button:hover {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
+      button:hover {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
 
-        #file-info {
-            font-size: 12px;
-            color: #777;
-        }
+      #file-info {
+        font-size: 12px;
+        color: #777;
+      }
 
-        textarea {
-            flex-grow: 1;
-            background: var(--bg);
-            color: var(--text);
-            border: none;
-            padding: 20px;
-            font-size: 15px;
-            line-height: 1.6;
-            resize: none;
-            outline: none;
-            caret-color: var(--accent);
-        }
+      textarea {
+        flex-grow: 1;
+        background: var(--bg);
+        color: var(--text);
+        border: none;
+        padding: 20px;
+        font-size: 15px;
+        line-height: 1.6;
+        resize: none;
+        outline: none;
+        caret-color: var(--accent);
+      }
     </style>
-</head>
-<body>
-
-<header id="ui-header" inert>
-    <button onclick="openFile()">Open File</button>
-    <button onclick="saveFile()">Save (Ctrl+S)</button>
-    <span id="file-info">No file selected</span>
-</header>
-
-<textarea id="editor" spellcheck="false"></textarea>
-
-<script>
-    let fileHandle;
-    let isDirty = false;
-    const editor = document.getElementById('editor');
-    const fileInfo = document.getElementById('file-info');
-    const header = document.getElementById('ui-header');
-
-    // UI visibility logic for Search (Ctrl+F)
-    document.addEventListener('mousemove', (e) => {
+  </head>
+  <body>
+    <header id="ui-header" inert>
+      <button onclick="openFile()">Open File</button>
+      <button onclick="saveFile()">Save (Ctrl+S)</button>
+      <span id="file-info">No file selected</span>
+    </header>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <script>
+      let fileHandle;
+      let isDirty = false;
+      const editor = document.getElementById('editor');
+      const fileInfo = document.getElementById('file-info');
+      const header = document.getElementById('ui-header');
+      document.addEventListener('mousemove', (e) => {
         if (e.clientY < 60) {
-            header.removeAttribute('inert');
+          header.removeAttribute('inert');
         } else {
-            header.setAttribute('inert', '');
+          header.setAttribute('inert', '');
         }
-    });
-
-    // Track changes and update the dot indicator
-    editor.addEventListener('input', () => {
+      });
+      editor.addEventListener('input', () => {
         if (!isDirty) {
-            isDirty = true;
-            updateFileInfo();
+          isDirty = true;
+          updateFileInfo();
         }
-    });
-
-    // Confirmation before closing unsaved work
-    window.addEventListener('beforeunload', (e) => {
+      });
+      window.addEventListener('beforeunload', (e) => {
         if (isDirty) {
-            e.preventDefault();
-            e.returnValue = ''; 
+          e.preventDefault();
+          e.returnValue = '';
         }
-    });
+      });
 
-    function updateFileInfo() {
+      function updateFileInfo() {
         const name = fileHandle ? fileHandle.name : 'Unsaved File';
         fileInfo.innerText = `${isDirty ? '● ' : ''}${name}`;
-    }
-
-    async function openFile() {
+      }
+      async function openFile() {
         try {
-            // Removed specific file types to allow all extensions
-            [fileHandle] = await window.showOpenFilePicker();
-            const file = await fileHandle.getFile();
-            editor.value = await file.text();
-            isDirty = false;
-            fileInfo.innerText = `Editing: ${file.name}`;
+          [fileHandle] = await window.showOpenFilePicker();
+          const file = await fileHandle.getFile();
+          editor.value = await file.text();
+          isDirty = false;
+          fileInfo.innerText = `Editing: ${file.name}`;
         } catch (err) {}
-    }
-
-    async function saveFile() {
+      }
+      async function saveFile() {
         if (!fileHandle) {
-            try {
-                fileHandle = await window.showSaveFilePicker();
-            } catch (err) { return; }
+          try {
+            fileHandle = await window.showSaveFilePicker();
+          } catch (err) {
+            return;
+          }
         }
         const writable = await fileHandle.createWritable();
         await writable.write(editor.value);
         await writable.close();
-        
         isDirty = false;
         fileInfo.innerText = `Saved: ${new Date().toLocaleTimeString()} - ${fileHandle.name}`;
-    }
-
-    document.addEventListener('keydown', (e) => {
+      }
+      document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            saveFile();
+          e.preventDefault();
+          saveFile();
         }
-    });
-
-    // Tab key -> 2 spaces
-    editor.addEventListener('keydown', (e) => {
+      });
+      editor.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
-            e.preventDefault();
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            editor.value = editor.value.substring(0, start) + "  " + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + 2;
+          e.preventDefault();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          editor.value = editor.value.substring(0, start) + "  " + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + 2;
         }
-    });
-</script>
-
-</body>
+      });
+    </script>
+  </body>
 </html>
