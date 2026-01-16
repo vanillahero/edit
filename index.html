@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natt-Editor 🌙</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --text: #d4d4d4;
+            --accent: #3794ff;
+            --header: #1e1e1e;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Consolas', 'Monaco', monospace;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 8px 15px;
+            background: var(--header);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        button {
+            background: #2d2d2d;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        #file-info {
+            font-size: 12px;
+            color: #777;
+        }
+
+        textarea {
+            flex-grow: 1;
+            background: var(--bg);
+            color: var(--text);
+            border: none;
+            padding: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            caret-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <button onclick="openFile()">Åpne fil</button>
+    <button onclick="saveFile()">Lagre (Ctrl+S)</button>
+    <span id="file-info">Ingen fil valgt</span>
+</header>
+
+<textarea id="editor" placeholder="Klar for koding..." spellcheck="false"></textarea>
+
+<script>
+    let fileHandle;
+    const editor = document.getElementById('editor');
+    const fileInfo = document.getElementById('file-info');
+
+    // Åpne fil
+    async function openFile() {
+        try {
+            [fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Web Files',
+                    accept: {'text/html': ['.html'], 'text/css': ['.css'], 'text/javascript': ['.js']}
+                }]
+            });
+            const file = await fileHandle.getFile();
+            editor.value = await file.text();
+            fileInfo.innerText = `Redigerer: ${file.name}`;
+        } catch (err) {
+            console.log('Bruker avbrøt åpning');
+        }
+    }
+
+    // Lagre fil (overskriver hvis filen allerede er åpnet)
+    async function saveFile() {
+        if (!fileHandle) {
+            try {
+                fileHandle = await window.showSaveFilePicker();
+            } catch (err) {
+                return; // Bruker avbrøt
+            }
+        }
+
+        const writable = await fileHandle.createWritable();
+        await writable.write(editor.value);
+        await writable.close();
+        
+        fileInfo.innerText = `Lagret: ${new Date().toLocaleTimeString()} - ${fileHandle.name}`;
+    }
+
+    // Hurtigtaster
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            saveFile();
+        }
+    });
+
+    // Tab-tasten setter nå inn 2 mellomrom
+    editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+
+            // Sett inn to mellomrom
+            editor.value = editor.value.substring(0, start) + "  " + editor.value.substring(end);
+
+            // Flytt markøren to plasser frem
+            editor.selectionStart = editor.selectionEnd = start + 2;
+        }
+    });
+</script>
+
+</body>
+</html>
