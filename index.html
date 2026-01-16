@@ -77,7 +77,7 @@
     <span id="file-info">No file selected</span>
 </header>
 
-<textarea id="editor" placeholder="Start coding..." spellcheck="false"></textarea>
+<textarea id="editor" spellcheck="false"></textarea>
 
 <script>
     let fileHandle;
@@ -95,7 +95,7 @@
         }
     });
 
-    // Track changes
+    // Track changes and update the dot indicator
     editor.addEventListener('input', () => {
         if (!isDirty) {
             isDirty = true;
@@ -103,11 +103,11 @@
         }
     });
 
-    // Warn before closing if unsaved changes
+    // Confirmation before closing unsaved work
     window.addEventListener('beforeunload', (e) => {
         if (isDirty) {
             e.preventDefault();
-            e.returnValue = ''; // Standard browser warning
+            e.returnValue = ''; 
         }
     });
 
@@ -118,12 +118,8 @@
 
     async function openFile() {
         try {
-            [fileHandle] = await window.showOpenFilePicker({
-                types: [{
-                    description: 'Web Files',
-                    accept: {'text/html': ['.html'], 'text/css': ['.css'], 'text/javascript': ['.js']}
-                }]
-            });
+            // Removed specific file types to allow all extensions
+            [fileHandle] = await window.showOpenFilePicker();
             const file = await fileHandle.getFile();
             editor.value = await file.text();
             isDirty = false;
@@ -145,7 +141,6 @@
         fileInfo.innerText = `Saved: ${new Date().toLocaleTimeString()} - ${fileHandle.name}`;
     }
 
-    // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
