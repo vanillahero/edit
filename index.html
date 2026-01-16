@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Natt-Editor 🌙</title>
+    <title>Night Editor 🌙</title>
     <style>
         :root {
             --bg: #121212;
@@ -24,7 +24,6 @@
             overflow: hidden;
         }
 
-        /* Denne delen blir nå "usynlig" for Ctrl+F */
         header {
             padding: 8px 15px;
             background: var(--header);
@@ -32,7 +31,7 @@
             gap: 12px;
             align-items: center;
             border-bottom: 1px solid #333;
-            user-select: none; /* Hindrer markering av knappetekst */
+            user-select: none;
         }
 
         button {
@@ -72,22 +71,22 @@
 </head>
 <body>
 
-<header inert>
-    <button onclick="openFile()">Åpne fil</button>
-    <button onclick="saveFile()">Lagre (Ctrl+S)</button>
-    <span id="file-info">Ingen fil valgt</span>
+<header id="ui-header" inert>
+    <button onclick="openFile()">Open File</button>
+    <button onclick="saveFile()">Save (Ctrl+S)</button>
+    <span id="file-info">No file selected</span>
 </header>
 
-<textarea id="editor" placeholder="Klar for koding..." spellcheck="false"></textarea>
+<textarea id="editor" placeholder="Start coding..." spellcheck="false"></textarea>
 
 <script>
     let fileHandle;
+    let isDirty = false;
     const editor = document.getElementById('editor');
     const fileInfo = document.getElementById('file-info');
-    const header = document.querySelector('header');
+    const header = document.getElementById('ui-header');
 
-    // Funksjon for å midlertidig fjerne 'inert' når vi faktisk skal klikke
-    // Siden 'inert' også blokkerer klikk, fjerner vi det ved mousemove
+    // UI visibility logic for Search (Ctrl+F)
     document.addEventListener('mousemove', (e) => {
         if (e.clientY < 60) {
             header.removeAttribute('inert');
@@ -96,17 +95,39 @@
         }
     });
 
+    // Track changes
+    editor.addEventListener('input', () => {
+        if (!isDirty) {
+            isDirty = true;
+            updateFileInfo();
+        }
+    });
+
+    // Warn before closing if unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = ''; // Standard browser warning
+        }
+    });
+
+    function updateFileInfo() {
+        const name = fileHandle ? fileHandle.name : 'Unsaved File';
+        fileInfo.innerText = `${isDirty ? '● ' : ''}${name}`;
+    }
+
     async function openFile() {
         try {
             [fileHandle] = await window.showOpenFilePicker({
                 types: [{
-                    description: 'Web-filer',
+                    description: 'Web Files',
                     accept: {'text/html': ['.html'], 'text/css': ['.css'], 'text/javascript': ['.js']}
                 }]
             });
             const file = await fileHandle.getFile();
             editor.value = await file.text();
-            fileInfo.innerText = `Redigerer: ${file.name}`;
+            isDirty = false;
+            fileInfo.innerText = `Editing: ${file.name}`;
         } catch (err) {}
     }
 
@@ -119,9 +140,12 @@
         const writable = await fileHandle.createWritable();
         await writable.write(editor.value);
         await writable.close();
-        fileInfo.innerText = `Lagret: ${new Date().toLocaleTimeString()} - ${fileHandle.name}`;
+        
+        isDirty = false;
+        fileInfo.innerText = `Saved: ${new Date().toLocaleTimeString()} - ${fileHandle.name}`;
     }
 
+    // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
@@ -129,6 +153,7 @@
         }
     });
 
+    // Tab key -> 2 spaces
     editor.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
             e.preventDefault();
